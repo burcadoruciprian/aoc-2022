@@ -1,0 +1,6 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+/.git* text eol=lf
+*.rs   text eol=lf
+*.toml text eol=lf
