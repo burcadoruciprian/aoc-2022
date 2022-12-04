@@ -1,17 +1,12 @@
-use regex::Regex;
-
+use itertools::Itertools;
 fn parse_input(input: &str) -> Vec<(u32, u32, u32, u32)> {
-    let id_re = Regex::new(r"(\d+)-(\d+),(\d+)-(\d+)").unwrap();
     input
         .lines()
         .map(|l| {
-            let c = id_re.captures(l).unwrap();
-            (
-                c[1].parse::<u32>().unwrap(),
-                c[2].parse::<u32>().unwrap(),
-                c[3].parse::<u32>().unwrap(),
-                c[4].parse::<u32>().unwrap(),
-            )
+            l.split(&['-', ','][..])
+                .map(|t| t.parse::<u32>().unwrap())
+                .collect_tuple()
+                .unwrap()
         })
         .collect()
 }
@@ -26,12 +21,12 @@ fn part1(pairs: &Vec<(u32, u32, u32, u32)>) -> u32 {
 }
 
 fn part2(pairs: &Vec<(u32, u32, u32, u32)>) -> u32 {
-    pairs.iter().fold(0, |acc, v| {
-        match (v.1 < v.2) || (v.3 < v.0) {
+    pairs
+        .iter()
+        .fold(0, |acc, v| match (v.1 < v.2) || (v.3 < v.0) {
             true => acc,
             false => acc + 1,
-        }
-    })
+        })
 }
 
 fn main() {
