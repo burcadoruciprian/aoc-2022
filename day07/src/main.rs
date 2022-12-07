@@ -20,25 +20,27 @@ fn exec_commands(input: &str) -> (NodeId, Arena<Dir>) {
     let mut crt_dir = arena.new_node(Dir::new("/", 0));
     let root = crt_dir;
 
-    input.trim().lines().skip(1).for_each(|l| {
-        if l.starts_with("$ cd") {
-            let dir_name = l.strip_prefix("$ cd ");
-
-            crt_dir = match dir_name {
-                Some("..") => arena.get(crt_dir).unwrap().parent().unwrap(),
-                Some(_) => crt_dir
+    input.trim().lines().for_each(|l| {
+        let cmd = l.split_ascii_whitespace().collect::<Vec<&str>>();
+        match cmd[..] {
+            ["$", "cd", "/"] => crt_dir = root,
+            ["$", "cd", ".."] => crt_dir = arena.get(crt_dir).unwrap().parent().unwrap(),
+            ["$", "cd", dir_name] => {
+                crt_dir = crt_dir
                     .children(arena)
-                    .find(|c| arena.get(*c).unwrap().get().name == dir_name.unwrap())
+                    .find(|c| arena.get(*c).unwrap().get().name == dir_name)
                     .unwrap_or_else(|| {
-                        let nc = arena.new_node(Dir::new(dir_name.unwrap(), 0));
+                        let nc = arena.new_node(Dir::new(dir_name, 0));
                         crt_dir.append(nc, arena);
                         nc
-                    }),
-                None => panic!("Invalid command"),
-            };
-        } else if l.chars().take(1).last().unwrap().is_numeric() {
-            let size: usize = l.split_once(" ").unwrap().0.parse().unwrap();
-            arena.get_mut(crt_dir).unwrap().get_mut().size += size;
+                    })
+            }
+            ["$", "ls"] => (),
+            ["dir", _] => (),
+            [size, _name] => {
+                arena.get_mut(crt_dir).unwrap().get_mut().size += size.parse::<usize>().unwrap()
+            }
+            _ => panic!("Unknown command"),
         }
     });
 
