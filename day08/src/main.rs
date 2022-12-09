@@ -10,7 +10,7 @@ fn parse_input(input: &str) -> Vec<Vec<u8>> {
 }
 
 fn part1(grid: &Vec<Vec<u8>>) -> usize {
-    let mut counter = 0 as usize;
+    let mut counter = 0_usize;
     for r in 1..grid[0].len() - 1 {
         for c in 1..grid.len() - 1 {
             let crt = grid[r][c];
@@ -42,7 +42,7 @@ fn part1(grid: &Vec<Vec<u8>>) -> usize {
 }
 
 fn part2(grid: &Vec<Vec<u8>>) -> usize {
-    let mut highest = 0 as usize;
+    let mut highest = 0_usize;
     for r in 1..grid[0].len() - 1 {
         for c in 1..grid.len() - 1 {
             let crt = grid[r][c];
