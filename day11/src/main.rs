@@ -63,7 +63,7 @@ impl Monkey {
 }
 
 fn parse_input(input: &str) -> Vec<Monkey> {
-    input.split("\n\n").map(|m| Monkey::from_flat(m)).collect()
+    input.split("\n\n").map(Monkey::from_flat).collect()
 }
 
 fn round(monkeys: &mut Vec<Monkey>, worry_relief_fn: impl Fn(usize) -> usize) {
