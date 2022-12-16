@@ -1,5 +1,8 @@
-use ranges::Ranges;
-use std::collections::HashSet;
+use ranges::{GenericRange, Ranges};
+use std::{
+    collections::HashSet,
+    ops::{Bound, RangeBounds},
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Pos {
@@ -27,6 +30,16 @@ impl Sensor {
             beacon: Pos::new(x2, y2),
             range: (x1 - x2).abs() + (y1 - y2).abs(),
         }
+    }
+}
+
+fn range_len(range: &GenericRange<isize>) -> isize {
+    match (range.start_bound(), range.end_bound()) {
+        (Bound::Included(start), Bound::Included(end)) => end - start + 1,
+        (Bound::Excluded(start), Bound::Excluded(end)) => end - start - 1,
+        (Bound::Included(start), Bound::Excluded(end)) => end - start,
+        (Bound::Excluded(start), Bound::Included(end)) => end - start,
+        _ => panic!("Range len cannot be deduced"),
     }
 }
 
@@ -68,7 +81,7 @@ fn part1(sensors: &Vec<Sensor>, y: isize) -> isize {
     y_intersect_ranges
         .as_slice()
         .iter()
-        .fold(0, |acc: isize, r| acc + r.into_iter().count() as isize)
+        .fold(0, |acc: isize, r| acc + range_len(r))
         - beacons_in_ranges.len() as isize
 }
 
@@ -89,8 +102,11 @@ fn part2(sensors: &Vec<Sensor>, max_y: isize) -> Option<usize> {
     for y in 0..=max_y {
         let r = intersect_ranges_at_line(y);
         if r.len() > 1 {
-            let x = r.as_slice().first().unwrap().into_iter().last().unwrap() as usize + 1;
-            return Some(4000000 * x + y as usize);
+            let x = match r.as_slice().first().unwrap().end_bound() {
+                Bound::Included(end) => end + 1,
+                _ => panic!("Wrong bound"),
+            };
+            return Some(4000000 * x as usize + y as usize);
         }
     }
 
