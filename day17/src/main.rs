@@ -1,4 +1,7 @@
-use std::{cmp, collections::{HashSet, HashMap}};
+use std::{
+    cmp,
+    collections::{HashMap, HashSet},
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 struct Block {
@@ -279,26 +282,43 @@ impl Shape for SquareShape {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+struct State {
+    row_signature: usize,
+    inst_index: usize,
+    shape: usize,
+}
+
+impl State {
+    fn new(r: usize, i: usize, s: usize) -> Self {
+        State {
+            row_signature: r,
+            inst_index: i,
+            shape: s,
+        }
+    }
+}
+
 struct Grid {
-    max_h: usize,
+    top: usize,
     blocks: HashSet<Block>,
 }
 
 impl Grid {
     fn new() -> Self {
         Grid {
-            max_h: 0,
+            top: 0_usize,
             blocks: HashSet::new(),
         }
     }
 
     fn new_shape(&self, turn: usize) -> Box<dyn Shape> {
         match turn % 5 {
-            1 => Box::new(MinusShape::new(self.max_h + 4)),
-            2 => Box::new(PlusShape::new(self.max_h + 4)),
-            3 => Box::new(LShape::new(self.max_h + 4)),
-            4 => Box::new(BarShape::new(self.max_h + 4)),
-            0 => Box::new(SquareShape::new(self.max_h + 4)),
+            1 => Box::new(MinusShape::new(self.top + 4)),
+            2 => Box::new(PlusShape::new(self.top + 4)),
+            3 => Box::new(LShape::new(self.top + 4)),
+            4 => Box::new(BarShape::new(self.top + 4)),
+            0 => Box::new(SquareShape::new(self.top + 4)),
             _ => panic!(),
         }
     }
@@ -367,20 +387,27 @@ impl Grid {
         let instructions = inst.chars().collect::<Vec<char>>();
         let mut turn = 1_usize;
         let mut crt_ins_index = 0_usize;
-        let mut cycles: HashMap<usize, Vec<usize>> = HashMap::new();
+        let mut cache: HashMap<State, (usize, usize)> = HashMap::new();
+        let mut cycle_height = 0;
+        let mut cycles_no = 0;
         while turn <= turns {
+            let crt_top_state = State::new(
+                self.row_signature(&self.top),
+                crt_ins_index % inst.len(),
+                turn % 5,
+            );
 
-            if (self.is_new_floor(&self.max_h))
-            {
-                println!("New floor: h: {} turn: {}, Ins {}", self.max_h, turn, crt_ins_index);
+            if let Some((prev_top, prev_turn)) = cache.insert(crt_top_state, (self.top, turn)) {
+                let cycle_turns_len = turn - prev_turn;
+                cycle_height = self.top - prev_top;
+                cycles_no = (turns - turn) / cycle_turns_len;
+                turn += cycle_turns_len * cycles_no;
+                cache.clear();
             }
-
-
 
             let mut shape = self.new_shape(turn);
             let mut settled = false;
             while !settled {
-                
                 let crt_inst = instructions[crt_ins_index % inst.len()];
                 match crt_inst {
                     '>' => self.shift(Direction::Right, shape.as_mut()),
@@ -392,27 +419,28 @@ impl Grid {
                 settled = !self.shift(Direction::Down, shape.as_mut());
                 if settled {
                     self.blocks.extend(shape.blocks());
-                    self.max_h = cmp::max(self.max_h, shape.most(Direction::Up));
+                    self.top = cmp::max(self.top, shape.most(Direction::Up));
                 }
             }
             turn += 1;
         }
 
-        self.max_h
+        self.top + cycle_height * cycles_no
     }
 
-    fn is_new_floor(&self, h: &usize) -> bool {
-        match *h {
-            0 => true,
-            _ => (0..7).all(|x| self.blocks.contains(&Block::new(x, *h))),
-        }
+    fn row_signature(&self, y: &usize) -> usize {
+        (0..7).fold(0, |acc, x| match self.blocks.contains(&Block::new(x, *y)) {
+            true => acc + 2_usize.pow(x as u32),
+            false => acc,
+        })
     }
 }
 
 fn main() {
-    let insttructions = include_str!("input").trim();
+    let instructions = include_str!("input").trim();
     let mut grid = Grid::new();
-    println!("Part1: {}", grid.run(2022, insttructions));
+    println!("Part1: {}", grid.run(2022, instructions));
+    println!("Part2: {}", grid.run(1000000000000, instructions));
 }
 
 #[cfg(test)]
