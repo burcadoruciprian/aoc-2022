@@ -102,7 +102,7 @@ fn run(elfs: &HashSet<Pos>, rounds: usize) -> (Option<isize>, Option<isize>) {
     ];
 
     for round in 0..rounds {
-        let mut proposed_moves: HashMap<Pos, Vec<Pos>> = HashMap::new();
+        let mut next_spaces: HashMap<Pos, Vec<Pos>> = HashMap::new();
         let mut next_elfs = HashSet::new();
         elfs.iter().for_each(|elf| {
             if elf.neighbours().iter().all(|n| !elfs.contains(n)) {
@@ -111,7 +111,7 @@ fn run(elfs: &HashSet<Pos>, rounds: usize) -> (Option<isize>, Option<isize>) {
             } else {
                 for d in directions.iter() {
                     if can_move_to(*d, elf, &elfs) {
-                        proposed_moves
+                        next_spaces
                             .entry(*elf + *d)
                             .and_modify(|v| v.push(*elf))
                             .or_insert(vec![*elf]);
@@ -122,12 +122,12 @@ fn run(elfs: &HashSet<Pos>, rounds: usize) -> (Option<isize>, Option<isize>) {
             next_elfs.insert(*elf);
         });
 
-
+        
         if next_elfs.len() == elfs.len() {
             return (None, Some(round as isize + 1));
         }
 
-        for (new, old) in proposed_moves.iter() {
+        for (new, old) in next_spaces.iter() {
             if old.len() == 1 {
                 next_elfs.insert(*new);
             } else {
