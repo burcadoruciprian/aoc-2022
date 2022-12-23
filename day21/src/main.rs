@@ -66,7 +66,7 @@ fn parse_input(input: &str) -> HashMap<String, MonkeyBusiness> {
 }
 
 fn part1(monkeys: &HashMap<String, MonkeyBusiness>) -> isize {
-    monkeys["root"].yell(&monkeys)
+    monkeys["root"].yell(monkeys)
 }
 
 fn part2(monkeys: &HashMap<String, MonkeyBusiness>) -> isize {
